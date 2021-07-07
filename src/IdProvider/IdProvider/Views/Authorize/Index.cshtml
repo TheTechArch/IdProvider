@@ -1,0 +1,108 @@
+﻿@model IdProvider.Models.OidcAuthorizationModel
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<h4>OidcAuthorizationModel</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Index">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="UserClaims" class="control-label"></label>
+                <input asp-for="UserClaims" class="form-control" value="uid:1,acr:Level4,amr:smspin" />
+                <span asp-validation-for="UserClaims" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Redirect_uri" class="control-label"></label>
+                <input asp-for="Redirect_uri" class="form-control" />
+                <span asp-validation-for="Redirect_uri" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Scope" class="control-label"></label>
+                <input asp-for="Scope" class="form-control" />
+                <span asp-validation-for="Scope" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Response_type" class="control-label"></label>
+                <input asp-for="Response_type" class="form-control" />
+                <span asp-validation-for="Response_type" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Client_id" class="control-label"></label>
+                <input asp-for="Client_id" class="form-control" />
+                <span asp-validation-for="Client_id" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="State" class="control-label"></label>
+                <input asp-for="State" class="form-control" />
+                <span asp-validation-for="State" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Nonce" class="control-label"></label>
+                <input asp-for="Nonce" class="form-control" />
+                <span asp-validation-for="Nonce" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Acr_values" class="control-label"></label>
+                <input asp-for="Acr_values" class="form-control" />
+                <span asp-validation-for="Acr_values" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Response_mode" class="control-label"></label>
+                <input asp-for="Response_mode" class="form-control" />
+                <span asp-validation-for="Response_mode" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Ui_locales" class="control-label"></label>
+                <input asp-for="Ui_locales" class="form-control" />
+                <span asp-validation-for="Ui_locales" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Prompt" class="control-label"></label>
+                <input asp-for="Prompt" class="form-control" />
+                <span asp-validation-for="Prompt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Code_challenge" class="control-label"></label>
+                <input asp-for="Code_challenge" class="form-control" />
+                <span asp-validation-for="Code_challenge" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Code_challenge_method" class="control-label"></label>
+                <input asp-for="Code_challenge_method" class="form-control" />
+                <span asp-validation-for="Code_challenge_method" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Login_hint" class="control-label"></label>
+                <input asp-for="Login_hint" class="form-control" />
+                <span asp-validation-for="Login_hint" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Claims" class="control-label"></label>
+                <input asp-for="Claims" class="form-control" />
+                <span asp-validation-for="Claims" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Request_uri" class="control-label"></label>
+                <input asp-for="Request_uri" class="form-control" />
+                <span asp-validation-for="Request_uri" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -15,7 +15,7 @@ namespace IdProvider.Controllers
     /// <summary>
     /// Represents a controller that can expose standard endpoints published by an open id provider.
     /// </summary>
-    [Route("authentication/api/v1/openid/.well-known")]
+    [Route("/api/v1/openid/.well-known")]
     [AllowAnonymous]
     [ApiController]
     public class OpenIdController : ControllerBase

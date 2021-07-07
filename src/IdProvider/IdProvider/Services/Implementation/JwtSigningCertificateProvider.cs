@@ -4,10 +4,15 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure;
+using Azure.Identity;
+using Azure.Security.KeyVault.Certificates;
+using Azure.Security.KeyVault.Secrets;
 using IdProvider.Configuration;
 using IdProvider.Services.Interfaces;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.KeyVault.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Rest.Azure;
 
@@ -24,6 +29,7 @@ namespace IdProvider.Services
     {
         private readonly KeyVaultSettings _keyVaultSettings;
         private readonly CertificateSettings _certificateSettings;
+        private readonly ILogger _logger;
 
         private List<X509Certificate2> _certificates;
         private DateTime _certificateUpdateTime;
@@ -37,10 +43,11 @@ namespace IdProvider.Services
         /// <param name="certificateSettings">Settings required to access a certificate stored on a file system.</param>
         public JwtSigningCertificateProvider(
             IOptions<KeyVaultSettings> keyVaultSettings,
-            IOptions<CertificateSettings> certificateSettings)
+            IOptions<CertificateSettings> certificateSettings, ILogger<JwtSigningCertificateProvider> logger)
         {
             _keyVaultSettings = keyVaultSettings.Value;
             _certificateSettings = certificateSettings.Value;
+            _logger = logger;
         }
 
         /// <inheritdoc />
@@ -57,16 +64,10 @@ namespace IdProvider.Services
 
                 _certificates = new List<X509Certificate2>();
 
-                if (string.IsNullOrEmpty(_keyVaultSettings.ClientId) || string.IsNullOrEmpty(_keyVaultSettings.ClientSecret))
-                {
-                    _certificates.Add(new X509Certificate2(_certificateSettings.CertificatePath, _certificateSettings.CertificatePwd));
-                }
-                else
-                {
-                    List<X509Certificate2> certificates = await GetAllCertificateVersions(
-                        _keyVaultSettings.SecretUri, _certificateSettings.CertificateName);
-                    _certificates.AddRange(certificates);
-                }
+                List<X509Certificate2> certificates = await GetAllCertificateVersions(
+                    _keyVaultSettings.KeyVaultURI, _keyVaultSettings.MaskinPortenCertSecretId);
+                _certificates.AddRange(certificates);
+              
 
                 // Reuse the same list of certificates for 1 hour.
                 _certificateUpdateTime = DateTime.Now.AddHours(1);
@@ -82,40 +83,24 @@ namespace IdProvider.Services
 
         private async Task<List<X509Certificate2>> GetAllCertificateVersions(string keyVaultUrl, string certificateName)
         {
+            _logger.LogInformation("In method");
             List<X509Certificate2> certificates = new List<X509Certificate2>();
-            
-            KeyVaultClient client = KeyVaultSettings.GetClient(_keyVaultSettings.ClientId, _keyVaultSettings.ClientSecret);
 
-            // Get the first page of certificates
-            IPage<CertificateItem> certificateItemsPage = await client.GetCertificateVersionsAsync(keyVaultUrl, certificateName);
-            while (true)
+            CertificateClient certificateClient = new CertificateClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
+            AsyncPageable<CertificateProperties> certificatePropertiesPage = certificateClient.GetPropertiesOfCertificateVersionsAsync(certificateName);
+            await foreach (CertificateProperties certificateProperties in certificatePropertiesPage)
             {
-                foreach (var certificateItem in certificateItemsPage)
+                _logger.LogInformation("In loop");
+                if (certificateProperties.Enabled == true &&
+                    (certificateProperties.ExpiresOn == null || certificateProperties.ExpiresOn >= DateTime.UtcNow))
                 {
-                    // Ignore disabled or expired certificates
-                    if (certificateItem.Attributes.Enabled == true &&
-                        (certificateItem.Attributes.Expires == null ||
-                         certificateItem.Attributes.Expires > DateTime.UtcNow))
-                    {
-                        CertificateBundle certificateVersionBundle =
-                            await client.GetCertificateAsync(certificateItem.Identifier.Identifier);
-                        SecretBundle certificatePrivateKeySecretBundle =
-                            await client.GetSecretAsync(certificateVersionBundle.SecretIdentifier.Identifier);
-                        byte[] privateKeyBytes = Convert.FromBase64String(certificatePrivateKeySecretBundle.Value);
-                        X509Certificate2 certificateWithPrivateKey = new X509Certificate2(privateKeyBytes);
+                    SecretClient secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
 
-                        certificates.Add(certificateWithPrivateKey);
-                    }
+                    KeyVaultSecret secret = await secretClient.GetSecretAsync(certificateProperties.Name, certificateProperties.Version);
+                    X509Certificate2 certificateWithPrivateKey = new X509Certificate2(Convert.FromBase64String(secret.Value), (string)null, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+                    certificates.Add(certificateWithPrivateKey);
                 }
-
-                if (certificateItemsPage.NextPageLink == null)
-                {
-                    break;
-                }
-
-                certificateItemsPage = await client.GetCertificateVersionsNextAsync(certificateItemsPage.NextPageLink);
             }
-
             return certificates;
         }
     }

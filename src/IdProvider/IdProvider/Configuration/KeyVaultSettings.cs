@@ -9,37 +9,15 @@ namespace IdProvider.Configuration
     public class KeyVaultSettings
     {
         /// <summary>
-        /// The key vault reader client id
+        /// Uri to keyvault
         /// </summary>
-        public string ClientId { get; set; }
+        public string KeyVaultURI { get; set; }
 
         /// <summary>
-        /// The key vault client secret
+        /// Name of the certificate secret
         /// </summary>
-        public string ClientSecret { get; set; }
+        public string MaskinPortenCertSecretId { get; set; } = "digdirtestcert";
 
-        /// <summary>
-        /// The key vault tenant Id
-        /// </summary>
-        public string TenantId { get; set; }
-
-        /// <summary>
-        /// The uri to the key vault
-        /// </summary>
-        public string SecretUri { get; set; }
-
-        /// <summary>
-        /// Creates the client used to connect to key vault
-        /// </summary>
-        /// <param name="clientId">The key vault client id</param>
-        /// <param name="clientSecret">The key vault client secret</param>
-        public static KeyVaultClient GetClient(string clientId, string clientSecret) => new KeyVaultClient(new KeyVaultClient.AuthenticationCallback(async (string authority, string resource, string scope) =>
-        {
-            AuthenticationContext context = new AuthenticationContext(authority, TokenCache.DefaultShared);
-            ClientCredential clientCred = new ClientCredential(clientId, clientSecret);
-            AuthenticationResult authResult = await context.AcquireTokenAsync(resource, clientCred);
-            return authResult.AccessToken;
-        }));
     }
 
 }

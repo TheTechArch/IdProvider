@@ -1,10 +1,6 @@
 ﻿using IdProvider.Models;
 using IdProvider.Services.Interface;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace IdProvider.Controllers
@@ -32,8 +28,10 @@ namespace IdProvider.Controllers
             [FromForm] string assertion,
             [FromForm] string refresh_token)
         {
-            GrantResponse grantResponse = new GrantResponse();
-            grantResponse.id_token = await _tokenService.GetTokenFromCode(code);
+            GrantResponse grantResponse = new GrantResponse
+            {
+                id_token = await _tokenService.GetTokenFromCode(code)
+            };
             return Ok(grantResponse);
         }
     }

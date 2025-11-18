@@ -2,8 +2,6 @@
 using IdProvider.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace IdProvider.Controllers
@@ -43,7 +41,7 @@ namespace IdProvider.Controllers
             [FromQuery] string request_uri
           )
         {
-            OidcAuthorizationModel viewModel = new OidcAuthorizationModel()
+            OidcAuthorizationModel viewModel = new()
             {
                 Response_type = response_type,
                 Client_id = client_id,
@@ -71,7 +69,7 @@ namespace IdProvider.Controllers
         {
             string code = await _tokenService.GetAuthorizationCode(viewModel);
 
-            UriBuilder baseUri = new UriBuilder(viewModel.Redirect_uri);
+            UriBuilder baseUri = new(viewModel.Redirect_uri);
             if (baseUri.Query != null && baseUri.Query.Length > 1)
                 baseUri.Query = baseUri.Query + "&" + "code=" + code;
             else

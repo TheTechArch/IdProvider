@@ -29,5 +29,7 @@ namespace IdProvider.Models
         public string Login_hint { get; internal set; }
         public string Claims { get; internal set; }
         public string Request_uri { get; internal set; }
+
+        public string Pid { get; set;}
     }
 }

@@ -13,6 +13,11 @@
         <form asp-action="Index">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
+                <label asp-for="Pid" class="control-label"></label>
+                <input asp-for="Pid" class="form-control" value="" />
+                <span asp-validation-for="Pid" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="UserClaims" class="control-label"></label>
                 <input asp-for="UserClaims" class="form-control" value="uid:1,acr:Level4,amr:smspin" />
                 <span asp-validation-for="UserClaims" class="text-danger"></span>

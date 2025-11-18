@@ -16,7 +16,7 @@ namespace IdProvider.Configuration
         /// <summary>
         /// Name of the certificate secret
         /// </summary>
-        public string MaskinPortenCertSecretId { get; set; } = "digdirtestcert";
+        public string MaskinPortenCertSecretId { get; set; } = "idprovider-signing-cert-1";
 
     }
 

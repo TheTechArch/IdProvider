@@ -88,6 +88,12 @@ namespace IdProvider.Services
 
             CertificateClient certificateClient = new CertificateClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
             AsyncPageable<CertificateProperties> certificatePropertiesPage = certificateClient.GetPropertiesOfCertificateVersionsAsync(certificateName);
+
+            if(certificatePropertiesPage == null)
+            {
+                throw new Exception("Certificate properties page is null");
+            }
+
             await foreach (CertificateProperties certificateProperties in certificatePropertiesPage)
             {
                 _logger.LogInformation("In loop");

@@ -23,7 +23,7 @@ namespace IdProvider.Configuration
         /// </remarks>
         public int JwtSigningCertificateRolloverDelayHours { get; set; }
 
-        public string IdProviderEndpoint { get; internal set; }
+        public string IdProviderEndpoint { get; internal set; } = "https://idprovider.azurewebsites.net/";
 
         public string IssCode { get; set; } = "https://idprovider.azurewebsites.net/authorization";
 

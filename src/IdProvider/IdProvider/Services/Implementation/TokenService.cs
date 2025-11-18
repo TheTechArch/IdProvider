@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace IdProvider.Services.Implementation
@@ -56,6 +57,42 @@ namespace IdProvider.Services.Implementation
             ClaimsPrincipal principal = new ClaimsPrincipal(identity);
             return await GenerateToken(principal, DateTime.Now.AddMinutes(5));
         }
+
+        public static ClaimsPrincipal GetClaimsPrincipal(string sub, string pid, string locale, string nonce, string sid, string aud, string[] acr, string[] amr, DateTimeOffset auth_time)
+        {
+            List<Claim> claims = new List<Claim>();
+            string issuer = "www.idporten.no";
+            claims.Add(new Claim("iss", issuer, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("sub", sub, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("pid", pid, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("locale", locale, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("nonce", nonce, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("sid", sid, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("aud", aud, ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("acr", string.Join(" ", acr), ClaimValueTypes.String, issuer));
+            claims.Add(new Claim("auth_time", auth_time.ToUnixTimeSeconds().ToString(), ClaimValueTypes.DateTime, issuer));
+            if (amr != null && amr.Length != 0)
+            {
+                var amrr = amr
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim())
+                .Distinct()
+                .ToArray();
+
+                if (amrr.Length > 0)
+                {
+                    string amrJson = JsonSerializer.Serialize(amrr); // e.g. ["TestID","pwd"]
+                    claims.Add(new Claim("amr", amrJson, JsonClaimValueTypes.JsonArray));
+                }
+            }
+
+            ClaimsIdentity identity = new ClaimsIdentity("mock");
+            identity.AddClaims(claims);
+            ClaimsPrincipal principal = new(identity);
+
+            return principal;
+        }
+
 
         public async Task<string> GetTokenFromCode(string code)
         {

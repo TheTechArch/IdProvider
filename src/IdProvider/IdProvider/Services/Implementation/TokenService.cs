@@ -52,6 +52,16 @@ namespace IdProvider.Services.Implementation
                 claims.Add(new Claim("nonce", oidcAuthorizationModel.Nonce));
             }
 
+            GetClaimsPrincipal(Guid.NewGuid().ToString(),
+                oidcAuthorizationModel.Pid,
+                "nb",
+                oidcAuthorizationModel.Nonce,
+                Guid.NewGuid().ToString(),
+                oidcAuthorizationModel.Client_id,
+                oidcAuthorizationModel.Acr_values.Split(" "),
+                new[] { "bankid" },
+                DateTimeOffset.Now);
+
             ClaimsIdentity identity = new ClaimsIdentity("authorizationcode");
             identity.AddClaims(claims);
             ClaimsPrincipal principal = new ClaimsPrincipal(identity);

@@ -23,7 +23,7 @@ namespace IdProvider.Controllers
         /// <param name=""></param>
         /// <returns></returns>
         [HttpGet]
-        public IActionResult Index(
+        public async Task<IActionResult> Index(
             [FromQuery] string response_type,
             [FromQuery] string client_id,
             [FromQuery] string redirect_uri,
@@ -38,7 +38,8 @@ namespace IdProvider.Controllers
             [FromQuery] string code_challenge_method,
             [FromQuery] string login_hint,
             [FromQuery] string claims,
-            [FromQuery] string request_uri
+            [FromQuery] string request_uri,
+            [FromQuery] string pid
           )
         {
             OidcAuthorizationModel viewModel = new()
@@ -57,8 +58,26 @@ namespace IdProvider.Controllers
                 Code_challenge_method = code_challenge_method,
                 Login_hint = login_hint,
                 Claims = claims,
-                Request_uri = request_uri
+                Request_uri = request_uri,
+                Pid = pid
             };
+
+            if(!string.IsNullOrEmpty(viewModel.Pid))
+            {
+                string code = await _tokenService.GetAuthorizationCode(viewModel);
+
+                UriBuilder baseUri = new(viewModel.Redirect_uri);
+                if (baseUri.Query != null && baseUri.Query.Length > 1)
+                    baseUri.Query = baseUri.Query + "&" + "code=" + code;
+                else
+                {
+                    baseUri.Query = "code=" + code;
+                }
+
+                baseUri.Query = baseUri.Query + "&state=" + viewModel.State;
+
+                return Redirect(baseUri.ToString());
+            }
 
             return View(viewModel);
         }

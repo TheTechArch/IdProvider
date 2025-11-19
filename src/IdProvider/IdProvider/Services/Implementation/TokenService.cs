@@ -58,27 +58,37 @@ namespace IdProvider.Services.Implementation
                 oidcAuthorizationModel.Nonce,
                 Guid.NewGuid().ToString(),
                 oidcAuthorizationModel.Client_id,
-                oidcAuthorizationModel.Acr_values.Split(" "),
+                oidcAuthorizationModel.Acr_values?.Split(" "),
                 new[] { "bankid" },
                 DateTimeOffset.Now);
 
             ClaimsIdentity identity = new ClaimsIdentity("authorizationcode");
             identity.AddClaims(claims);
             ClaimsPrincipal principal = new ClaimsPrincipal(identity);
-            return await GenerateToken(principal, DateTime.Now.AddMinutes(5));
+            return await GenerateAccessToken(principal, DateTime.Now.AddMinutes(5));
         }
 
         public static ClaimsPrincipal GetClaimsPrincipal(string sub, string pid, string locale, string nonce, string sid, string aud, string[] acr, string[] amr, DateTimeOffset auth_time)
         {
             List<Claim> claims = new List<Claim>();
-            string issuer = "www.idporten.no";
+            string issuer = "idprovider.azurewebsites.net";
             claims.Add(new Claim("iss", issuer, ClaimValueTypes.String, issuer));
             claims.Add(new Claim("sub", sub, ClaimValueTypes.String, issuer));
-            claims.Add(new Claim("pid", pid, ClaimValueTypes.String, issuer));
-            claims.Add(new Claim("locale", locale, ClaimValueTypes.String, issuer));
+            if (!string.IsNullOrEmpty(pid))
+            {
+                claims.Add(new Claim("pid", pid, ClaimValueTypes.String, issuer));
+            }
+            if (!string.IsNullOrEmpty(locale))
+            {
+                claims.Add(new Claim("locale", locale, ClaimValueTypes.String, issuer));
+            }
             claims.Add(new Claim("nonce", nonce, ClaimValueTypes.String, issuer));
             claims.Add(new Claim("sid", sid, ClaimValueTypes.String, issuer));
             claims.Add(new Claim("aud", aud, ClaimValueTypes.String, issuer));
+            if(acr == null || acr.Length == 0)
+            {
+                acr = new string[] { "Level4" };
+            }
             claims.Add(new Claim("acr", string.Join(" ", acr), ClaimValueTypes.String, issuer));
             claims.Add(new Claim("auth_time", auth_time.ToUnixTimeSeconds().ToString(), ClaimValueTypes.DateTime, issuer));
             if (amr != null && amr.Length != 0)
@@ -96,7 +106,7 @@ namespace IdProvider.Services.Implementation
                 }
             }
 
-            ClaimsIdentity identity = new ClaimsIdentity("mock");
+            ClaimsIdentity identity = new("mock");
             identity.AddClaims(claims);
             ClaimsPrincipal principal = new(identity);
 
@@ -114,10 +124,10 @@ namespace IdProvider.Services.Implementation
             ClaimsIdentity identity = new ClaimsIdentity("token");
             identity.AddClaims(claims);
             ClaimsPrincipal principal = new ClaimsPrincipal(identity);
-            return await GenerateToken(principal, DateTime.Now.AddMinutes(5));
+            return await GenerateAccessToken(principal, DateTime.Now.AddMinutes(5));
         }
 
-        private async Task<string> GenerateToken(ClaimsPrincipal principal, DateTime? expires = null)
+        private async Task<string> GenerateAccessToken(ClaimsPrincipal principal, DateTime? expires = null)
         {
             List<X509Certificate2> certificates = await _certificateProvider.GetCertificates();
 

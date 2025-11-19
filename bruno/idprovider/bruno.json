@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "idprovider",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

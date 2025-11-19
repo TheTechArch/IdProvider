@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace IdProvider.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("token")]
     [ApiController]
     public class TokenController : ControllerBase
     {
@@ -17,6 +17,7 @@ namespace IdProvider.Controllers
         }
 
         [Consumes("application/x-www-form-urlencoded")]
+        [HttpPost]
         public async Task<ActionResult> Index(
             [FromForm] string client_id, 
             [FromForm] string grant_type, 

@@ -9,6 +9,7 @@ using IdProvider.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace IdProvider.Controllers
 {
@@ -42,11 +43,12 @@ namespace IdProvider.Controllers
         /// </summary>
         /// <returns>The configuration object for Open ID Connect.</returns>
         [HttpGet("openid-configuration")]
+        [Produces("application/json")]
         public async Task<IActionResult> GetOpenIdConfigurationAsync()
         {
             string baseUrl = _generalSettings.IdProviderEndpoint;
 
-            DiscoveryDocument discoveryDocument = new DiscoveryDocument
+            OpenIdConnectConfiguration discoveryDocument = new OpenIdConnectConfiguration
             {
                 // REQUIRED
                 Issuer = new Uri(baseUrl).ToString(),
@@ -61,13 +63,18 @@ namespace IdProvider.Controllers
                 JwksUri = new Uri(baseUrl + "/api/v1/OpenId/.well-known/openid-configuration/jwks").ToString(),
 
                 // REQUIRED
-                ResponseTypesSupported = new[] { "token" }, // "code", "id_token", "id_token token", 
+                ResponseTypesSupported = { "token" }, // "code", "id_token", "id_token token", 
 
                 // REQUIRED
-                SubjectTypesSupported = new[] { "pairwise" },
+                SubjectTypesSupported = { "pairwise" },
 
                 // REQUIRED
-                IdTokenSigningAlgValuesSupported = new[] { "RS256" }
+                IdTokenSigningAlgValuesSupported = {"RS256"},
+
+                FrontchannelLogoutSessionSupported = "false",
+
+                FrontchannelLogoutSupported = "false"
+
             };
 
             return await Task.FromResult(Ok(discoveryDocument));

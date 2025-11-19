@@ -77,6 +77,8 @@ namespace IdProvider.Controllers
                 baseUri.Query = "code=" + code;
             }
 
+            baseUri.Query = baseUri.Query + "&state=" + viewModel.State;
+
             return Redirect(baseUri.ToString());
         }
         private Uri BuildRedirectUri(OidcAuthorizationModel model, string authorizationCode)

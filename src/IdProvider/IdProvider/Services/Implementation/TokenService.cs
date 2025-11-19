@@ -52,7 +52,7 @@ namespace IdProvider.Services.Implementation
                 claims.Add(new Claim("nonce", oidcAuthorizationModel.Nonce));
             }
 
-            GetClaimsPrincipal(Guid.NewGuid().ToString(),
+            ClaimsPrincipal principal = GetClaimsPrincipal(Guid.NewGuid().ToString(),
                 oidcAuthorizationModel.Pid,
                 "nb",
                 oidcAuthorizationModel.Nonce,
@@ -61,17 +61,13 @@ namespace IdProvider.Services.Implementation
                 oidcAuthorizationModel.Acr_values?.Split(" "),
                 new[] { "bankid" },
                 DateTimeOffset.Now);
-
-            ClaimsIdentity identity = new ClaimsIdentity("authorizationcode");
-            identity.AddClaims(claims);
-            ClaimsPrincipal principal = new ClaimsPrincipal(identity);
             return await GenerateAccessToken(principal, DateTime.Now.AddMinutes(5));
         }
 
-        public static ClaimsPrincipal GetClaimsPrincipal(string sub, string pid, string locale, string nonce, string sid, string aud, string[] acr, string[] amr, DateTimeOffset auth_time)
+        public ClaimsPrincipal GetClaimsPrincipal(string sub, string pid, string locale, string nonce, string sid, string aud, string[] acr, string[] amr, DateTimeOffset auth_time)
         {
             List<Claim> claims = new List<Claim>();
-            string issuer = "idprovider.azurewebsites.net";
+            string issuer = "https://idprovider.azurewebsites.net/authorization";
             claims.Add(new Claim("iss", issuer, ClaimValueTypes.String, issuer));
             claims.Add(new Claim("sub", sub, ClaimValueTypes.String, issuer));
             if (!string.IsNullOrEmpty(pid))
@@ -117,14 +113,11 @@ namespace IdProvider.Services.Implementation
         public async Task<string> GetTokenFromCode(string code)
         {
            JwtSecurityToken codeToken = await ValidateAuthorizationCode(code);
-            string issuer = _generalSettings.IssToken;
-            List<Claim> claims = new List<Claim>();
-            claims.Add(new Claim("iss", issuer));
-            claims.AddRange(codeToken.Claims);
-            ClaimsIdentity identity = new ClaimsIdentity("token");
-            identity.AddClaims(claims);
+            string issuer = codeToken.Issuer;
+            ClaimsIdentity identity = new("token");
+            identity.AddClaims(codeToken.Claims);
             ClaimsPrincipal principal = new ClaimsPrincipal(identity);
-            return await GenerateAccessToken(principal, DateTime.Now.AddMinutes(5));
+            return await GenerateAccessToken(principal, DateTime.Now.AddMinutes(60));
         }
 
         private async Task<string> GenerateAccessToken(ClaimsPrincipal principal, DateTime? expires = null)

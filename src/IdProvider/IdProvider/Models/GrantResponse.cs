@@ -10,5 +10,13 @@ namespace IdProvider.Models
         public string client_id { get; set; }
 
         public string id_token { get; set; }
+
+        public string access_token { get; set; } = string.Empty;
+
+        public string token_type { get; set; } = "Bearer";
+
+        public int expires_in { get; set; } = 3600;
+
+        public string refresh_token { get; set; } = string.Empty;
     }
 }

@@ -100,12 +100,5 @@ namespace IdProvider.Controllers
 
             return Redirect(baseUri.ToString());
         }
-        private Uri BuildRedirectUri(OidcAuthorizationModel model, string authorizationCode)
-        {
-
-            Uri uri = new Uri(model.Redirect_uri);
-
-            return uri;
-        }
     }
 }

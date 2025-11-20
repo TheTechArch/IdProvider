@@ -30,27 +30,7 @@ namespace IdProvider.Services.Implementation
 
         public async Task<string> GetAuthorizationCode(OidcAuthorizationModel oidcAuthorizationModel)
         {
-            string[] userClaims = oidcAuthorizationModel.UserClaims.Split(",");
-            
             string issuer = _generalSettings.IssCode;
-            List<Claim> claims = new List<Claim>();
-
-            if(userClaims.Count() > 0)
-            {
-                foreach(string claim in userClaims)
-                {
-                    string[] claimSplit = claim.Split(":");
-                    if(claimSplit.Count() == 2)
-                    {
-                        claims.Add(new Claim(claimSplit[0], claimSplit[1]));
-                    }
-                }
-            }
-
-            if(!string.IsNullOrEmpty(oidcAuthorizationModel.Nonce))
-            {
-                claims.Add(new Claim("nonce", oidcAuthorizationModel.Nonce));
-            }
 
             ClaimsPrincipal principal = GetClaimsPrincipal(Guid.NewGuid().ToString(),
                 oidcAuthorizationModel.Pid,
@@ -67,7 +47,7 @@ namespace IdProvider.Services.Implementation
         public ClaimsPrincipal GetClaimsPrincipal(string sub, string pid, string locale, string nonce, string sid, string aud, string[] acr, string[] amr, DateTimeOffset auth_time)
         {
             List<Claim> claims = new List<Claim>();
-            string issuer = "https://idprovider.azurewebsites.net/authorization";
+            string issuer = _generalSettings.IssCode;
             claims.Add(new Claim("iss", issuer, ClaimValueTypes.String, issuer));
             claims.Add(new Claim("sub", sub, ClaimValueTypes.String, issuer));
             if (!string.IsNullOrEmpty(pid))

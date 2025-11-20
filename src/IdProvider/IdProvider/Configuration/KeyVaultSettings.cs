@@ -1,5 +1,6 @@
 using Microsoft.Azure.KeyVault;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using System.ComponentModel.DataAnnotations;
 
 namespace IdProvider.Configuration
 {
@@ -11,6 +12,7 @@ namespace IdProvider.Configuration
         /// <summary>
         /// Uri to keyvault
         /// </summary>
+        [Required]
         public string KeyVaultURI { get; set; }
 
         /// <summary>

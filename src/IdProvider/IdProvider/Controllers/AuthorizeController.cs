@@ -1,6 +1,7 @@
 using IdProvider.Configuration;
 using IdProvider.Helpers;
 using IdProvider.Models;
+using IdProvider.Services;
 using IdProvider.Services.Interface;
 using IdProvider.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -37,7 +38,7 @@ namespace IdProvider.Controllers
         /// removed - it was an unauthenticated pid-to-token oracle (#1983).
         /// </summary>
         [HttpGet]
-        public IActionResult Index(
+        public async Task<IActionResult> Index(
             [FromQuery] string response_type,
             [FromQuery] string client_id,
             [FromQuery] string redirect_uri,
@@ -59,24 +60,43 @@ namespace IdProvider.Controllers
                 return TestIdpDisabled();
             }
 
-            OidcAuthorizationModel viewModel = new()
+            OidcAuthorizationModel viewModel;
+
+            // PAR (RFC 9126): when a request_uri is supplied, the authorization
+            // request parameters come from the (signed, validated) request
+            // object only - loose query parameters are ignored.
+            if (!string.IsNullOrEmpty(request_uri))
             {
-                Response_type = response_type,
-                Client_id = client_id,
-                Redirect_uri = redirect_uri,
-                Scope = scope,
-                State = state,
-                Nonce = nonce,
-                Acr_values = acr_values,
-                Response_mode = response_mode,
-                Ui_locales = ui_locales,
-                Prompt = prompt,
-                Code_challenge = code_challenge,
-                Code_challenge_method = code_challenge_method,
-                Login_hint = login_hint,
-                Claims = claims,
-                Request_uri = request_uri
-            };
+                try
+                {
+                    viewModel = await _tokenService.ReadRequestObject(request_uri);
+                }
+                catch (OidcRequestException ex)
+                {
+                    _logger.LogWarning("Test-IDP rejected request_uri: {Error}", ex.Error);
+                    return BadRequest(new { error = ex.Error, error_description = ex.Message });
+                }
+            }
+            else
+            {
+                viewModel = new OidcAuthorizationModel
+                {
+                    Response_type = response_type,
+                    Client_id = client_id,
+                    Redirect_uri = redirect_uri,
+                    Scope = scope,
+                    State = state,
+                    Nonce = nonce,
+                    Acr_values = acr_values,
+                    Response_mode = response_mode,
+                    Ui_locales = ui_locales,
+                    Prompt = prompt,
+                    Code_challenge = code_challenge,
+                    Code_challenge_method = code_challenge_method,
+                    Login_hint = login_hint,
+                    Claims = claims
+                };
+            }
 
             return View(viewModel);
         }

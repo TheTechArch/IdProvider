@@ -1,4 +1,5 @@
 ﻿using IdProvider.Models;
+using IdProvider.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,22 @@ namespace IdProvider.Services.Interface
     {
         Task<string> GetAuthorizationCode(OidcAuthorizationModel oidcAuthorizationModel);
 
-        Task<string> GetTokenFromCode(string code);
+        /// <summary>
+        /// Validates the authorization code and PKCE, then issues a token.
+        /// Throws <see cref="OidcRequestException"/> on any failure.
+        /// </summary>
+        Task<string> GetTokenFromCode(string code, string codeVerifier);
 
+        /// <summary>
+        /// Stateless PAR: serializes the authorization request into a signed,
+        /// short-lived JWT and returns it (the value to embed in request_uri).
+        /// </summary>
+        Task<string> CreateRequestObject(OidcAuthorizationModel oidcAuthorizationModel);
+
+        /// <summary>
+        /// Validates a request_uri value and rehydrates the authorization
+        /// request. Throws <see cref="OidcRequestException"/> if invalid.
+        /// </summary>
+        Task<OidcAuthorizationModel> ReadRequestObject(string requestUri);
     }
 }

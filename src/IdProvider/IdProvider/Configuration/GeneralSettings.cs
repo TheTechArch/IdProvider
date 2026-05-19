@@ -8,6 +8,34 @@ namespace IdProvider.Configuration
     public class GeneralSettings
     {
         /// <summary>
+        /// Master kill switch for the Test-IDP. When false (default) every Test-IDP
+        /// endpoint short-circuits and no tokens are issued. Must be explicitly
+        /// enabled per environment. See issue #1983 / #1409.
+        /// </summary>
+        public bool TestIdpEnabled { get; set; } = false;
+
+        /// <summary>
+        /// The single shared access password that grants the right to use the
+        /// Test-IDP. This is NOT a per-user credential - there is no username and
+        /// no per-user password. Injected from Key Vault per environment; never
+        /// committed. When empty the Test-IDP refuses all logins (fail-closed).
+        /// See issue #1983 / #1409.
+        /// </summary>
+        public string TestIdpSharedPassword { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Number of consecutive failed shared-password attempts (globally, since
+        /// it is a single shared secret) before the login is locked out.
+        /// </summary>
+        public int SharedPasswordMaxFailures { get; set; } = 5;
+
+        /// <summary>
+        /// Lockout duration in minutes once <see cref="SharedPasswordMaxFailures"/>
+        /// is reached.
+        /// </summary>
+        public int SharedPasswordLockoutMinutes { get; set; } = 15;
+
+        /// <summary>
         /// Gets or sets the number of minutes the JSON Web Token and the cookie is valid.
         /// </summary>
         public int JwtValidityMinutes { get; set; }

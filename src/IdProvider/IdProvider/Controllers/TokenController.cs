@@ -1,6 +1,8 @@
-﻿using IdProvider.Models;
+﻿using IdProvider.Configuration;
+using IdProvider.Models;
 using IdProvider.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 
 namespace IdProvider.Controllers
@@ -10,10 +12,12 @@ namespace IdProvider.Controllers
     public class TokenController : ControllerBase
     {
         private readonly IToken _tokenService;
+        private readonly GeneralSettings _generalSettings;
 
-        public TokenController(IToken tokenService)
+        public TokenController(IToken tokenService, IOptions<GeneralSettings> generalSettings)
         {
             _tokenService = tokenService;
+            _generalSettings = generalSettings.Value;
         }
 
         [Consumes("application/x-www-form-urlencoded")]
@@ -29,6 +33,11 @@ namespace IdProvider.Controllers
             [FromForm] string assertion,
             [FromForm] string refresh_token)
         {
+            if (!_generalSettings.TestIdpEnabled)
+            {
+                return NotFound();
+            }
+
             GrantResponse grantResponse = new GrantResponse
             {
                 id_token = await _tokenService.GetTokenFromCode(code),

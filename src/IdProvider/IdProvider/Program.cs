@@ -4,7 +4,11 @@ using IdProvider.Services;
 using IdProvider.Services.Implementation;
 using IdProvider.Services.Interface;
 using IdProvider.Services.Interfaces;
+using System;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -23,6 +27,24 @@ services.AddControllersWithViews();
 
 services.AddSingleton<IJwtSigningCertificateProvider, JwtSigningCertificateProvider>();
 services.AddSingleton<IToken, TokenService>();
+services.AddSingleton<ISharedAccessPasswordValidator, SharedAccessPasswordValidator>();
+
+// Per-IP rate limiting on the Test-IDP login. The shared password is a single
+// secret and thus the prime brute-force target (#1983).
+services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("test-idp-login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
+
 services.AddLogging();
 services.AddApplicationInsightsTelemetry(opts =>
 {
@@ -46,6 +68,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseRateLimiter();
 
 app.UseAuthorization();
 

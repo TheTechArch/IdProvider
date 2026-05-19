@@ -24,6 +24,14 @@ namespace IdProvider.Configuration
         public string TestIdpSharedPassword { get; set; } = string.Empty;
 
         /// <summary>
+        /// When true, the token endpoint requires PKCE: an authorization code
+        /// issued without a code_challenge cannot be redeemed. When false
+        /// (default, safe rollout) PKCE is enforced only when a code_challenge
+        /// was supplied at /Authorize. See issue #1983 / #1409.
+        /// </summary>
+        public bool RequirePkce { get; set; } = false;
+
+        /// <summary>
         /// Number of consecutive failed shared-password attempts (globally, since
         /// it is a single shared secret) before the login is locked out.
         /// </summary>

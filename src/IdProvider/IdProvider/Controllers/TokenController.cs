@@ -1,5 +1,6 @@
 ﻿using IdProvider.Configuration;
 using IdProvider.Models;
+using IdProvider.Services;
 using IdProvider.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -38,10 +39,20 @@ namespace IdProvider.Controllers
                 return NotFound();
             }
 
+            string token;
+            try
+            {
+                token = await _tokenService.GetTokenFromCode(code, code_verifier);
+            }
+            catch (OidcRequestException ex)
+            {
+                return BadRequest(new { error = ex.Error, error_description = ex.Message });
+            }
+
             GrantResponse grantResponse = new GrantResponse
             {
-                id_token = await _tokenService.GetTokenFromCode(code),
-                access_token = await _tokenService.GetTokenFromCode(code),
+                id_token = token,
+                access_token = token,
                 token_type = "Bearer",
                 expires_in = 3600,
                 refresh_token = "ADFSFDSFSDFDSFDSF"

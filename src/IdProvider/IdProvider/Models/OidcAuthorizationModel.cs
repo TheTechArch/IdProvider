@@ -31,5 +31,11 @@ namespace IdProvider.Models
         public string Request_uri { get; internal set; }
 
         public string Pid { get; set;}
+
+        /// <summary>
+        /// The single shared access password granting the right to use the
+        /// Test-IDP. Posted in the form body only - never a query parameter.
+        /// </summary>
+        public string Password { get; set; }
     }
 }

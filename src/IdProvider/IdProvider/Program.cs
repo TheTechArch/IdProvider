@@ -1,4 +1,6 @@
 using Altinn.Authorization.ServiceDefaults;
+using Azure.Extensions.AspNetCore.Configuration.Secrets;
+using Azure.Identity;
 using IdProvider.Configuration;
 using IdProvider.Services;
 using IdProvider.Services.Implementation;
@@ -9,11 +11,25 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = AltinnHost.CreateWebApplicationBuilder("idprovider", args);
 var services = builder.Services;
+
+// Load secrets from the mockporten Key Vault as a configuration source. The
+// vault URI is supplied per environment via kvSetting:KeyVaultURI (already
+// configured in Azure). A secret named "GeneralSettings--TestIdpSharedPassword"
+// binds to GeneralSettings:TestIdpSharedPassword (the Key Vault config provider
+// maps "--" to ":"). See #1983.
+var keyVaultUri = builder.Configuration["kvSetting:KeyVaultURI"];
+if (!string.IsNullOrWhiteSpace(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUri),
+        new DefaultAzureCredential());
+}
 
 services.AddOptions<GeneralSettings>()
     .BindConfiguration("GeneralSettings")

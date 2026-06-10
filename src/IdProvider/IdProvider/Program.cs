@@ -45,8 +45,15 @@ services.AddSingleton<IJwtSigningCertificateProvider, JwtSigningCertificateProvi
 services.AddSingleton<IToken, TokenService>();
 services.AddSingleton<ISharedAccessPasswordValidator, SharedAccessPasswordValidator>();
 
-// Per-IP rate limiting on the Test-IDP login. The shared password is a single
-// secret and thus the prime brute-force target (#1983).
+// Per-IP rate limiting (#1983). Two policies, both partitioned on the caller IP:
+//   - "test-idp-login": the shared-password form (POST /Authorize), the prime
+//     brute-force target, kept deliberately low.
+//   - "test-idp-api": the unauthenticated, CPU-bound endpoints (POST /token,
+//     POST /par, and the request_uri branch of GET /Authorize), previously
+//     unthrottled. A higher ceiling that backstops a mass-calling flood without
+//     throttling legitimate load-test traffic.
+// Both limits are configurable so they can be tuned per environment.
+var rateLimitSettings = builder.Configuration.GetSection("GeneralSettings").Get<GeneralSettings>() ?? new GeneralSettings();
 services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -55,7 +62,16 @@ services.AddRateLimiter(options =>
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = rateLimitSettings.LoginRateLimitPerMinute,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("test-idp-api", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = rateLimitSettings.ApiRateLimitPerMinute,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));

@@ -5,7 +5,6 @@ using IdProvider.Services;
 using IdProvider.Services.Interface;
 using IdProvider.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
@@ -38,7 +37,6 @@ namespace IdProvider.Controllers
         /// removed - it was an unauthenticated pid-to-token oracle (#1983).
         /// </summary>
         [HttpGet]
-        [EnableRateLimiting("test-idp-api")]
         public async Task<IActionResult> Index(
             [FromQuery] string response_type,
             [FromQuery] string client_id,
@@ -103,7 +101,6 @@ namespace IdProvider.Controllers
         }
 
         [HttpPost]
-        [EnableRateLimiting("test-idp-login")]
         public async Task<IActionResult> Index(OidcAuthorizationModel viewModel)
         {
             if (!_generalSettings.TestIdpEnabled)

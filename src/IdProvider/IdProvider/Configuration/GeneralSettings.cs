@@ -44,24 +44,6 @@ namespace IdProvider.Configuration
         public int SharedPasswordLockoutMinutes { get; set; } = 15;
 
         /// <summary>
-        /// Per-IP request ceiling (per minute) for the Test-IDP login form
-        /// (POST /Authorize). The shared password is the prime brute-force
-        /// target, so this stays deliberately low. See issue #1983.
-        /// </summary>
-        public int LoginRateLimitPerMinute { get; set; } = 10;
-
-        /// <summary>
-        /// Per-IP request ceiling (per minute) for the unauthenticated,
-        /// CPU-bound Test-IDP API endpoints (POST /token, POST /par and the
-        /// <c>request_uri</c> branch of GET /Authorize). These do signing /
-        /// verification work and were previously unthrottled, so this caps a
-        /// mass-calling flood while staying high enough not to throttle
-        /// legitimate load-test traffic. Raise per environment for heavier
-        /// performance runs. See issue #1983.
-        /// </summary>
-        public int ApiRateLimitPerMinute { get; set; } = 600;
-
-        /// <summary>
         /// Gets or sets the number of minutes the JSON Web Token and the cookie is valid.
         /// </summary>
         public int JwtValidityMinutes { get; set; }

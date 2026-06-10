@@ -7,10 +7,7 @@ using IdProvider.Services.Implementation;
 using IdProvider.Services.Interface;
 using IdProvider.Services.Interfaces;
 using System;
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -45,38 +42,6 @@ services.AddSingleton<IJwtSigningCertificateProvider, JwtSigningCertificateProvi
 services.AddSingleton<IToken, TokenService>();
 services.AddSingleton<ISharedAccessPasswordValidator, SharedAccessPasswordValidator>();
 
-// Per-IP rate limiting (#1983). Two policies, both partitioned on the caller IP:
-//   - "test-idp-login": the shared-password form (POST /Authorize), the prime
-//     brute-force target, kept deliberately low.
-//   - "test-idp-api": the unauthenticated, CPU-bound endpoints (POST /token,
-//     POST /par, and the request_uri branch of GET /Authorize), previously
-//     unthrottled. A higher ceiling that backstops a mass-calling flood without
-//     throttling legitimate load-test traffic.
-// Both limits are configurable so they can be tuned per environment.
-var rateLimitSettings = builder.Configuration.GetSection("GeneralSettings").Get<GeneralSettings>() ?? new GeneralSettings();
-services.AddRateLimiter(options =>
-{
-    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddPolicy("test-idp-login", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = rateLimitSettings.LoginRateLimitPerMinute,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            }));
-    options.AddPolicy("test-idp-api", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = rateLimitSettings.ApiRateLimitPerMinute,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            }));
-});
-
 services.AddLogging();
 services.AddApplicationInsightsTelemetry(opts =>
 {
@@ -100,8 +65,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
-app.UseRateLimiter();
 
 app.UseAuthorization();
 

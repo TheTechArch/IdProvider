@@ -2,7 +2,6 @@ using IdProvider.Configuration;
 using IdProvider.Models;
 using IdProvider.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 
@@ -15,7 +14,6 @@ namespace IdProvider.Controllers
     /// </summary>
     [Route("par")]
     [ApiController]
-    [EnableRateLimiting("test-idp-api")]
     public class ParController : ControllerBase
     {
         private readonly IToken _tokenService;

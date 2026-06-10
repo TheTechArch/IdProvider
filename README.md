@@ -27,8 +27,7 @@ Defence in depth — no single control is trusted alone:
 | Layer | Control |
 |---|---|
 | Kill switch | `GeneralSettings:TestIdpEnabled` (default **false**). When off, every endpoint returns `404`. |
-| Access | A single **shared access password** (not a per-user credential). Constant-time comparison, global lockout after N failures, per-IP rate limiting. |
-| Mass-calling | **Per-IP rate limits** on every public endpoint (`429` when exceeded): the login form (`POST /Authorize`) is held to a low `GeneralSettings:LoginRateLimitPerMinute` (default **10/min**) as the brute-force target; the unauthenticated, CPU-bound endpoints (`POST /token`, `POST /par`, the `request_uri` branch of `GET /Authorize`) get a higher flood backstop `GeneralSettings:ApiRateLimitPerMinute` (default **600/min**), tunable per environment for performance runs. |
+| Access | A single **shared access password** (not a per-user credential). Constant-time comparison, global lockout after N failures. |
 | Identity | **Fail-closed Tenor gate**: only a well-formed synthetic fødselsnummer (month 81–92, valid mod11) is accepted. Any ordinary number or real D-number is rejected *before* a code is issued. |
 | No oracle | The shared password is checked **first**. Until it is proven, the endpoint reveals nothing (bad/locked password → bare `401`/`429`, no redirect), so it cannot be probed. `pid` is accepted **only** in the POST body, never the query string. |
 | Authoritative gate | Altinn Authentication independently enforces `RequireSyntheticPid` (see #1409). The check here is *defence in depth*; the authoritative synthetic-only gate lives in the auth component, so a compromised Test-IDP that asserts a real `pid` is still rejected downstream. |
@@ -59,7 +58,7 @@ itself a signed JWT; no session store):
    `GET /Authorize` with the usual OIDC parameters.
 2. The user (or test automation) submits **one form**: the shared access
    password + a synthetic Tenor fødselsnummer.
-3. The password is validated (constant-time, rate-limited, lockout). Then the
+3. The password is validated (constant-time, with lockout). Then the
    fnr is validated by the fail-closed Tenor gate.
 4. On success an authorization `code` is issued and the browser is redirected
    back to `redirect_uri` with `code` and `state`.
@@ -70,10 +69,10 @@ itself a signed JWT; no session store):
 
 | Method & path | Purpose |
 |---|---|
-| `GET /Authorize` | Renders the test login form, or resolves a PAR `request_uri` (404 if disabled). Rate-limited per IP (`test-idp-api`). |
-| `POST /Authorize` | Validates shared password → Tenor gate → issues code & redirects. Rate-limited per IP (`test-idp-login`). |
-| `POST /par` | Pushes an authorization request, returns an opaque `request_uri` (404 if disabled). Rate-limited per IP (`test-idp-api`). |
-| `POST /token` | Exchanges the authorization code for tokens (404 if disabled). Rate-limited per IP (`test-idp-api`). |
+| `GET /Authorize` | Renders the test login form, or resolves a PAR `request_uri` (404 if disabled). |
+| `POST /Authorize` | Validates shared password → Tenor gate → issues code & redirects. |
+| `POST /par` | Pushes an authorization request, returns an opaque `request_uri` (404 if disabled). |
+| `POST /token` | Exchanges the authorization code for tokens (404 if disabled). |
 | `GET /api/v1/openid/.well-known/openid-configuration` | OIDC discovery document. |
 | `GET /api/v1/openid/.well-known/openid-configuration/jwks` | Signing keys (JWKS, with x5c chain). |
 | `GET /` | Information page (clearly marked test-only). |
@@ -175,7 +174,7 @@ lockout after N failures, counter reset on success).
 ## Status & roadmap
 
 Implemented (phases 1–2, see #1983): synthetic-only fail-closed gate, feature
-flag, shared-password authentication (constant-time, lockout, rate limit,
+flag, shared-password authentication (constant-time, lockout,
 no-oracle), Key Vault wiring, test-only UI.
 
 Not yet implemented (tracked in #1983):

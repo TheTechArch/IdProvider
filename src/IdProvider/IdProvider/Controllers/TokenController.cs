@@ -3,7 +3,6 @@ using IdProvider.Models;
 using IdProvider.Services;
 using IdProvider.Services.Interface;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 
@@ -11,7 +10,6 @@ namespace IdProvider.Controllers
 {
     [Route("token")]
     [ApiController]
-    [EnableRateLimiting("test-idp-api")]
     public class TokenController : ControllerBase
     {
         private readonly IToken _tokenService;
